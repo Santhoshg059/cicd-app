@@ -20,5 +20,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run test
+      - name: Build step
+        run: exit 1
+
+      - name: Run tests
         run: npm test
