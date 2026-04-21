@@ -12,6 +12,9 @@ app.get('/health', (req, res) => {
 app.get('/login', (req, res) => {
   res.send('Login API');
 });
+app.get('/build',(req,res)=>{
+    res.send("version updated deployed succesfully")
+})
 
 app.listen(3000, () => {
   console.log('Server running on port 3000');
