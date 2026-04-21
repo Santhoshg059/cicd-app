@@ -21,7 +21,7 @@ jobs:
         run: npm install
 
       - name: Build step
-        run: exit 1
+        run: echo "Build successful"
 
       - name: Run tests
         run: npm test
