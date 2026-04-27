@@ -1,30 +1,62 @@
-name: CI Pipeline
+name: Full CI/CD Pipeline
 
 on:
   push:
-    branches: [main, develop, feature/*]
+    branches: [main]
+
+env:
+  IMAGE_NAME: cicd-app
 
 jobs:
-  build:
+  build-test-deploy:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Checkout Code
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # 2. Setup Node
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: '18'
 
+      # 3. Cache Dependencies (faster builds)
+      - name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+
+      # 4. Install Dependencies
       - name: Install dependencies
         run: npm install
 
-      - name: Build step
-        run: echo "Build successful"
-
+      # 5. Run Tests
       - name: Run tests
         run: npm test
 
+      # 6. Build Step (optional now, important for frontend/TS)
+      - name: Build project
+        run: echo "Build step (add real build later)"
+
+      # 7. Login to Docker Hub
+      - name: Login to Docker Hub
+        run: echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+
+      # 8. Build Docker Image (with versioning)
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:latest .
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }} .
+
+      # 9. Push Docker Image
+      - name: Push Docker image
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+      # 10. Trigger Render Deployment
       - name: Deploy to Render
         run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
